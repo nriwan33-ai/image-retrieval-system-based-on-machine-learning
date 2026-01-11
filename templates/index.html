@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Retrieval System - VGG19 + FAISS + DuckDuckGo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Content-Based Image Retrieval</h1>
+            <p class="subtitle">VGG19 + FAISS + DuckDuckGo</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <h2>Drag & Drop Image Here</h2>
+                    <p>or click to browse</p>
+                    <input type="file" id="fileInput" accept="image/*" hidden>
+                </div>
+                
+                <div id="preview" class="preview" style="display: none;">
+                    <div class="preview-content">
+                        <img id="previewImage" src="" alt="Preview">
+                        <div class="preview-info">
+                            <p id="previewFilename"></p>
+                            <button id="searchBtn" class="btn btn-primary">Search Similar Images</button>
+                            <button id="clearBtn" class="btn btn-secondary">Clear</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="resultsSection" class="results-section" style="display: none;">
+                <h2>Similar Images</h2>
+                <div id="resultsContainer" class="results-grid">
+                    <!-- Results will be inserted here -->
+                </div>
+            </section>
+
+            <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+                <div class="spinner"></div>
+                <p>Processing... Searching DuckDuckGo...</p>
+            </div>
+
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 Image Retrieval System. Powered by VGG19, FAISS, and DuckDuckGo.</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
