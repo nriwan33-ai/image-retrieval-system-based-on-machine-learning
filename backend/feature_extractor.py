@@ -1,6 +1,6 @@
 import torch
 import torchvision.transforms as transforms
-from torchvision.models import vgg19
+from torchvision.models import vgg19, VGG19_Weights
 from PIL import Image
 import numpy as np
 from config import DEVICE, MODEL_NAME
@@ -16,7 +16,7 @@ class FeatureExtractor:
     
     def _load_model(self):
         """Load pre-trained VGG19 model."""
-        model = vgg19(pretrained=True)
+        model = vgg19(weights=VGG19_Weights.DEFAULT)
         # Remove the classification head, keep only feature extraction layers
         model = torch.nn.Sequential(*list(model.features.children()))
         model = model.to(self.device)
