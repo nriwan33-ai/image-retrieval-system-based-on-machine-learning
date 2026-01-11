@@ -16,11 +16,13 @@ class FeatureExtractor:
     
     def _load_model(self):
         """Load pre-trained VGG19 model."""
+        print("Loading VGG19 model...")
         model = vgg19(weights=VGG19_Weights.DEFAULT)
         # Remove the classification head, keep only feature extraction layers
         model = torch.nn.Sequential(*list(model.features.children()))
         model = model.to(self.device)
         model.eval()
+        print("✓ VGG19 model loaded (4096-dim features)")
         return model
     
     def _get_transforms(self):

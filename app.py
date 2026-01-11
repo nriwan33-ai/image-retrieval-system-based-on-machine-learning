@@ -12,9 +12,29 @@ app.config['SECRET_KEY'] = SECRET_KEY
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Initialize components
-feature_extractor = FeatureExtractor()
-cbir_system = DuckDuckGoCBIR()
+# Initialize components (lazy loaded)
+feature_extractor = None
+cbir_system = None
+
+def get_feature_extractor():
+    """Lazy load feature extractor."""
+    global feature_extractor
+    if feature_extractor is None:
+        try:
+            print("Loading VGG19 model...")
+            feature_extractor = FeatureExtractor()
+            print("✓ VGG19 model loaded")
+        except Exception as e:
+            print(f"✗ Failed to load VGG19 model: {e}")
+            raise
+    return feature_extractor
+
+def get_cbir_system():
+    """Lazy load CBIR system."""
+    global cbir_system
+    if cbir_system is None:
+        cbir_system = DuckDuckGoCBIR()
+    return cbir_system
 
 
 def allowed_file(filename):
@@ -49,7 +69,8 @@ def upload_image():
         file.save(filepath)
         
         # Extract features
-        features = feature_extractor.extract_features(filepath)
+        extractor = get_feature_extractor()
+        features = extractor.extract_features(filepath)
         
         # Return success with features
         return jsonify({
@@ -66,7 +87,7 @@ def upload_image():
 
 @app.route('/search', methods=['POST'])
 def search_similar():
-    """Search for similar images from DuckDuckGo."""
+    """Search for similar images in the local dataset."""
     try:
         data = request.get_json()
         
@@ -79,33 +100,49 @@ def search_similar():
         if not os.path.exists(filepath):
             return jsonify({'error': 'Image file not found'}), 404
         
+        print(f"\n{'='*60}")
+        print(f"Search initiated for file: {filename}")
+        print(f"{'='*60}")
+        
+        # Get services
+        extractor = get_feature_extractor()
+        cbir = get_cbir_system()
+        
         # Extract features from uploaded image
-        query_features = feature_extractor.extract_features(filepath)
+        print("Step 1: Extracting features from uploaded image...")
+        query_features = extractor.extract_features(filepath)
+        print(f"✓ Features extracted: {query_features.shape}")
         
-        # Get image description/query (use extracted keywords or default)
-        query_text = data.get('query', 'similar images')
+        # Get number of images in dataset
+        index_size = cbir.get_index_size()
+        print(f"Step 2: Dataset contains {index_size} images")
         
-        # Index images from DuckDuckGo
-        num_indexed = cbir_system.index_images_from_query(query_text)
-        
-        if num_indexed == 0:
+        if index_size == 0:
             return jsonify({
-                'error': 'No images found on DuckDuckGo for this search',
+                'error': 'Dataset is empty. Please run build_index.py first.',
                 'results': []
             }), 200
         
         # Search for similar images in the index
-        results = cbir_system.search_similar_images(query_features, k=10)
+        print(f"Step 3: Searching for similar images in FAISS index...")
+        results = cbir.search_similar_images(query_features, k=10)
+        
+        print(f"Step 4: Found {len(results)} similar images")
+        print(f"{'='*60}\n")
         
         return jsonify({
             'success': True,
             'results': results,
-            'indexed_count': num_indexed,
-            'message': f'Found {len(results)} similar images'
+            'indexed_count': index_size,
+            'message': f'Found {len(results)} similar images from {index_size} total'
         }), 200
     
     except Exception as e:
-        print(f"Search error: {str(e)}")
+        print(f"\n❌ Search Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        print()
+        return jsonify({'error': str(e)}), 500
         return jsonify({'error': str(e)}), 500
 
 
@@ -119,7 +156,19 @@ def get_upload(filename):
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint."""
-    return jsonify({'status': 'ok', 'model': 'VGG19+FAISS+DuckDuckGo'}), 200
+    try:
+        cbir = get_cbir_system()
+        index_size = cbir.get_index_size()
+        return jsonify({
+            'status': 'ok', 
+            'model': 'VGG19+FAISS+LocalDataset',
+            'dataset_size': index_size
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 
 
 @app.errorhandler(413)

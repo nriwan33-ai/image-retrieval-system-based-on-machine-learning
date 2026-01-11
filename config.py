@@ -23,10 +23,12 @@ DEVICE = 'cpu'  # Use 'cuda' for GPU
 FAISS_INDEX_PATH = os.path.join(BASE_DIR, 'faiss_index.bin')
 METADATA_PATH = os.path.join(BASE_DIR, 'metadata.json')
 
-# DuckDuckGo configuration
-DUCKDUCKGO_TIMEOUT = 30
-MAX_RESULTS_TO_FETCH = 50  # Fetch more than needed to account for errors
-FINAL_RESULTS = 10  # Return exactly 10 results
+# Dataset configuration
+DATASET_FOLDER = os.path.join(BASE_DIR, 'dataset')
+DATASET_CATEGORIES = [
+    'cars', 'motorbikes', 'pandas', 'manchester_united_jersey',
+    'laptops', 'orange', 'burger', 'jeans', 'xrays', 'dogs'
+]
 
 # Ensure upload directory exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)

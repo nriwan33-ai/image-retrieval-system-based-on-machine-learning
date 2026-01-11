@@ -79,7 +79,7 @@ class FAISSIndex:
             
             results.append({
                 'url': url,
-                'similarity': similarity,
+                'similarity': float(similarity),
                 'distance': float(distance)
             })
         
